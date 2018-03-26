@@ -99,7 +99,7 @@ class PickingStart extends Component {
   goItems() {
     const { picking } = this.props.navigation.state.params
     const { pickingItems } = this.state
-
+    this.props.navigation.state.params.unlock();
     this.setCurrentPicking(picking, pickingItems)
     this.setState({ isSubmiting: false })
     const navigationAction = NavigationActions.navigate({

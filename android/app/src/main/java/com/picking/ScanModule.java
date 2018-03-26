@@ -54,14 +54,14 @@ public class ScanModule extends ReactContextBaseJavaModule {
 		getReactApplicationContext().registerReceiver(intentBarcodeDataReceiver, intentFilter);
 		EnableDecoder(datawedge.ENABLE_CODE39);
 		EnableScanner();
-		sendEvent(getReactApplicationContext(), "onRefreshMessage", "enabled scan");
+		sendEvent(getReactApplicationContext(), "onRefreshMessage", "開啟掃描功能");
 	}
 
 	@ReactMethod
 	public void disabledScan() {
 		//getReactApplicationContext().unregisterReceiver(intentBarcodeDataReceiver);
 		DisableScanner();
-		sendEvent(getReactApplicationContext(), "onRefreshMessage", "disabled scan");
+		sendEvent(getReactApplicationContext(), "onRefreshMessage", "關閉掃描功能");
 	}
 
 	public void DisableScanner() {
