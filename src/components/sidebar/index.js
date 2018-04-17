@@ -72,7 +72,7 @@ class Sidebar extends Component {
         <Container style={{backgroundColor: '#fff', margin: 0}}>
           <Content>
             <List>
-              {this.state.admin &&
+              {/*this.state.admin &&
                 <ListItem icon onPress={this.goPage.bind(this, 'Scan')}>
                   <Left>
                     <Icon name="ios-barcode" />
@@ -83,7 +83,7 @@ class Sidebar extends Component {
                     </Text>
                   </Body>
                 </ListItem>
-              }
+              */}
               <ListItem icon onPress={this.logout.bind(this)}>
                 <Left>
                   <Icon name="ios-log-out" />
