@@ -8,13 +8,13 @@ export const addRealmData = (schema, list) => {
   try {
     let realm = new Realm({schema: [schema]})
     realm.write(()=> {
-        list.map((item) => {
-          realm.create(schema.name, item)
-        })
+      list.map((item) => {
+        realm.create(schema.name, item)
+      })
     })
     return true
   } catch (e) {
-    return e
+    return false
   }
 }
 
@@ -37,8 +37,8 @@ export const deleteAllRealmData = (schema) => {
   try {
     let realm = new Realm({schema: [schema]});
     realm.write(()=> {
-        let deleteSchema = realm.objects(schema.name)
-        realm.delete(deleteSchema); 
+      let deleteSchema = realm.objects(schema.name)
+      realm.delete(deleteSchema); 
     })
     return true
   } catch (e) {
@@ -62,11 +62,19 @@ export const deleteOneRealmData = (schema, filtered) => {
 export const fetchAllRealmData = (schema) => {
   let realm = new Realm({schema: [schema]})
   let data = realm.objects(schema.name)
-  return data
+  let arr = []
+  data.map((item) => {
+    arr.push(item)
+  })
+  return arr
 }
 
 export const fetchRealmData = (schema, filtered) => {
   let realm = new Realm({schema: [schema]})
   let data = realm.objects(schema.name).filtered(filtered)
-  return data
+  let obj = new Object
+  Object.keys(data).forEach((key) => {
+    obj[key] = data[key]
+  })
+  return obj
 }

@@ -3,31 +3,17 @@ import React, { Component } from 'react'
 import { AppRegistry, Alert } from 'react-native'
 import { Drawer, Container, Content, StyleProvider, Header, Left, Body, Right } from 'native-base'
 import { Button, Title, Icon, Text, List, ListItem } from 'native-base'
-import { NavigationActions, withNavigation } from 'react-navigation'
-import { connect } from 'react-redux'
-import { jwtPayload, loadToken, removeToken } from '../../lib'
-import { userLogout } from '../../actions'
-import getTheme from '../../nativeBase/components';
-import material from '../../nativeBase/variables/material';
+import { withNavigation } from 'react-navigation'
+import { removeToken, confirm, navigationReset } from '../../lib'
+import getTheme from '../../nativeBase/components'
+import material from '../../nativeBase/variables/material'
 
 class Sidebar extends Component {
   constructor(props) {
-    super(props);
-    this.state = {
-      admin: false
-    };
-  }
-
-  componentDidMount() {
-    this.checkAdmin()
-  }
-  
-  checkAdmin() {
-    let token = loadToken()
-    let payload = jwtPayload(token)
-    if (payload.sub = '106013') [
-      this.setState({ admin: true })
-    ]
+    super(props)
+    this.state = {}
+    this.logout = this.logout.bind(this)
+    this.removeUserInfo = this.removeUserInfo.bind(this)
   }
 
   goPage(page, params={}) {
@@ -40,30 +26,12 @@ class Sidebar extends Component {
   }
 
   logout() {
-    Alert.alert(
-      '登出',
-      '您確定要登出系統？',
-      [
-        {text: '確定', onPress: () => this.removeUserInfo()},
-        {text: '取消', onPress: () => null},
-      ],
-      { cancelable: false }
-    )
+    confirm('登出', '您確定要登出系統？', this.removeUserInfo, () => {})
   }
 
   removeUserInfo() {
-    const { dispatch } = this.props
     removeToken()
-    dispatch(userLogout())
-    const login = NavigationActions.reset({
-      index: 0,
-      actions: [
-        NavigationActions.navigate({
-          routeName: 'Login',
-        })
-      ]
-    })
-    this.props.navigation.dispatch(login)
+    navigationReset(this, 'Login')
   }
 
   render() {
@@ -84,7 +52,7 @@ class Sidebar extends Component {
                   </Body>
                 </ListItem>
               */}
-              <ListItem icon onPress={this.logout.bind(this)}>
+              <ListItem icon onPress={this.logout}>
                 <Left>
                   <Icon name="ios-log-out" />
                 </Left>
@@ -102,9 +70,5 @@ class Sidebar extends Component {
   }
 }
 
-function mapStateToProps(state) {
-  return {}
-}
-
-export default connect(mapStateToProps)(withNavigation(Sidebar))
+export default withNavigation(Sidebar)
 AppRegistry.registerComponent('Sidebar', () => Sidebar)

@@ -1,14 +1,10 @@
 'use strict'
 import React, { Component } from 'react'
-import axios from 'axios'
-import Realm from 'realm'
-import { itemsRealm, pickingRealm } from '../../realm/schema'
 import { AppRegistry, StyleSheet, Alert, View, BackHandler } from 'react-native'
-import { Container, Content, StyleProvider, Header, Left, Body } from 'native-base'
-import { Button, Title, Text, Icon } from 'native-base'
-import { NavigationActions, withNavigation } from 'react-navigation'
-import { loadToken } from '../../lib'
-import config from '../../config'
+import { Container, Content, StyleProvider, Header, Left, Body, Button, Title, Text, Icon } from 'native-base'
+import { getPickingInfo, removePicking, confirm, navigationReset } from '../../lib'
+import { withNavigation } from 'react-navigation'
+import { pickingEnd } from '../../api'
 import getTheme from '../../nativeBase/components'
 import material from '../../nativeBase/variables/material'
 
@@ -21,6 +17,9 @@ class PickingEnd extends Component {
       staddj: '',
       isSubmiting: false,
     }
+    this.goBackPicking = this.goBackPicking.bind(this)
+    this.pickingEnd = this.pickingEnd.bind(this)
+    this.cancelPicking = this.cancelPicking.bind(this)
   }
 
   componentDidMount() {
@@ -33,74 +32,38 @@ class PickingEnd extends Component {
   }
 
   getPickingInfo() {
-    let realm = new Realm({ schema: [pickingRealm, itemsRealm] })
-    let data = realm.objects(pickingRealm.name)
+    let data = getPickingInfo()
     this.setState({
-      sticu: data[0].sticu,
-      ststop: data[0].ststop,
-      staddj: data[0].staddj,
-    }, () => realm.close())
+      sticu: data.sticu,
+      ststop: data.ststop,
+      staddj: data.staddj,
+    })
   }
 
   cancelPicking() {
-    Alert.alert(
-      '放棄揀貨',
-      '您確定要放棄揀貨？此動作會清除本機上的揀貨記錄',
-      [
-        { text: '確定', onPress: () => this.goBackPicking() },
-        { text: '取消', onPress: () => null },
-      ],
-      { cancelable: false }
-    )
+    const title = '放棄揀貨'
+    const msg = '您確定要放棄揀貨？此動作會清除本機上的揀貨記錄'
+    confirm(title, msg, this.goBackPicking(), () => {})
     return true
   }
 
   goBackPicking() {
-    this.removePicking()
-    const picking = NavigationActions.reset({
-      index: 0,
-      actions: [
-        NavigationActions.navigate({
-          routeName: 'PickingList',
-        })
-      ]
-    })
-    this.props.navigation.dispatch(picking)
+    removePicking()
+    navigationReset(this, 'PickingList')
   }
 
   pickingEnd() {
     this.setState({ isSubmiting: true })
     const { sticu, ststop } = this.state
-    const self = this
-    let formData = new FormData()
-    formData.append('stop', ststop)
-    formData.append('date', config.date)
-    let token = loadToken()
-    const Auth = 'Bearer ' + token;
-    axios.post(config.route.pickingEnd, formData, { headers: { Authorization: Auth } })
-      .then(function (response) {
-        if (response.code = 200) {
-          alert('單號:' + sticu + ', 站碼:' + ststop + ' 已完成鍊料')
-          self.goBackPicking()
-        } else {
-          alert(response.data.error)
-          self.setState({ isSubmiting: false })
-        }
-      }).catch(function (error) {
-        alert(error)
-        self.setState({ isSubmiting: false })
-      })
-  }
-
-  removePicking() {
-    let realm = new Realm({ schema: [pickingRealm, itemsRealm] })
-    realm.write(() => {
-      let deletePicking = realm.objects(pickingRealm.name)
-      realm.delete(deletePicking)
-      let deleteItems = realm.objects(itemsRealm.name)
-      realm.delete(deleteItems)
-    })
-    realm.close()
+    const success = (res) => {
+      alert('單號:' + sticu + ', 站碼:' + ststop + ' 已完成鍊料')
+      this.goBackPicking()
+    }
+    const error = (err) => {
+      alert(err)
+      this.setState({ isSubmiting: false })
+    }
+    pickingEnd(ststop, success, error)
   }
 
   submitButton() {
@@ -112,7 +75,7 @@ class PickingEnd extends Component {
       )
     } else {
       return (
-        <Button block primary large onPress={this.pickingEnd.bind(this)} style={{ margin: 10 }}>
+        <Button block primary large onPress={this.pickingEnd} style={{ margin: 10 }}>
           <Text>完成揀貨</Text>
         </Button>
       )
@@ -127,7 +90,7 @@ class PickingEnd extends Component {
         <Container>
           <Header>
             <Left>
-              <Button transparent onPress={this.cancelPicking.bind(this)} style={{ width: 50 }}>
+              <Button transparent onPress={this.cancelPicking} style={{ width: 50 }}>
                 <Icon name='md-close' />
               </Button>
             </Left>
@@ -169,7 +132,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontSize: 16,
   },
-});
+})
 
 export default withNavigation(PickingEnd)
-AppRegistry.registerComponent('PickingEnd', () => PickingEnd);
+AppRegistry.registerComponent('PickingEnd', () => PickingEnd)

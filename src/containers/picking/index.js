@@ -1,17 +1,17 @@
 'use strict'
 import React, { Component } from 'react'
-import axios from 'axios'
 import Realm from 'realm'
 import { pickingRealm, itemsRealm } from '../../realm/schema'
 import { AppRegistry, StyleSheet, RefreshControl, View, ListView, TouchableHighlight } from 'react-native'
 import { Drawer, Container, Content, StyleProvider, Header, Left, Body } from 'native-base'
 import { Button, Title, Icon, Text } from 'native-base'
-import { NavigationActions, withNavigation } from 'react-navigation'
-import { loadToken } from '../../lib'
+import { withNavigation } from 'react-navigation'
+import { navigationGo } from '../../lib'
 import config from '../../config'
 import getTheme from '../../nativeBase/components'
 import material from '../../nativeBase/variables/material'
 import Sidebar from '../sidebar'
+import { goCurrentPicking, getPickingList} from '../../api'
 
 let ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1 !== r2 })
 let doubleClick = false
@@ -46,46 +46,32 @@ class Picking extends Component {
   }
 
   getPickingList() {
-    const self = this
-    let token = loadToken()
-    const Auth = 'Bearer ' + token;
-    axios.get(config.route.pickingList + '/' + config.date, { headers: { Authorization: Auth } })
-      .then(function (response) {
-        if (response.code = 200) {
-          self.setState({
-            pickingList: response.data,
-            refreshing: false,
-            vs: ds.cloneWithRows(response.data)
-          })
-        } else {
-          alert(response.data.error)
-        }
-      }).catch(function (error) {
-        alert(error)
+    const success = (res) => {
+      this.setState({
+        pickingList: res.data,
+        refreshing: false,
+        vs: ds.cloneWithRows(res.data)
       })
+    }
+    const error = (err) => {
+      alert(err)
+    }
+    getPickingList(success, error)
   }
 
   goCurrentPicking() {
-    const navigationAction = NavigationActions.navigate({
-      routeName: 'PickingItems',
-    })
-    this.props.navigation.dispatch(navigationAction)
+    navigationGo(this, 'PickingItems')
   }
 
   goPickingStart(item) {
     if (!doubleClick) {
       doubleClick = true
-      const navigationAction = NavigationActions.navigate({
-        routeName: 'PickingStart',
-        params: {
-          picking: item,
-          unlock: () => {
-            doubleClick = false
-          }
-        },
-      })
+      const params = {
+        picking: item,
+        unlock: () => doubleClick = false
+      }
       this.props.closeDrawer
-      this.props.navigation.dispatch(navigationAction)
+      navigationGo(this, 'PickingStart', params)
     }
   }
 
@@ -181,7 +167,7 @@ const styles = StyleSheet.create({
     color: '#F75000',
     padding: 10
   },
-});
+})
 
 export default withNavigation(Picking)
-AppRegistry.registerComponent('Picking', () => Picking);
+AppRegistry.registerComponent('Picking', () => Picking)

@@ -2,20 +2,83 @@
 import React, { Component } from 'react'
 import Realm from 'realm'
 import { itemsRealm, pickingRealm } from '../../realm/schema'
-import { AppRegistry, StyleSheet, NativeModules, DeviceEventEmitter, Alert, BackHandler } from 'react-native'
-import { Container, Content, StyleProvider, Header, Left, Body } from 'native-base'
-import { Button, Title, Text, Icon, Item, Input, Label } from 'native-base'
-import { NavigationActions, withNavigation } from 'react-navigation'
-import { toast } from '../../lib'
+import { withNavigation } from 'react-navigation'
+import { AppRegistry, StyleSheet, NativeModules, DeviceEventEmitter, BackHandler } from 'react-native'
+import {
+  Container,
+  Content,
+  StyleProvider,
+  Header,
+  Left,
+  Body,
+  Button,
+  Title,
+  Text,
+  Icon,
+  Item,
+  Input,
+  Label,
+} from 'native-base'
+import {
+  toast,
+  getAllItems,
+  removePicking,
+  picked,
+  checkFinished,
+  confirm,
+  navigationReset,
+  navigationGo,
+} from '../../lib'
 import getTheme from '../../nativeBase/components'
 import material from '../../nativeBase/variables/material'
 
 const ScanModule = NativeModules.ScanModule
 const msgOption = ['儲位', '料號', '批號']
 
+const styles = StyleSheet.create({
+  content: {
+    padding: 10
+  },
+  scanInfo: {
+    fontSize: 20,
+    fontWeight: '400',
+    borderStyle: 'solid',
+    borderWidth: 2,
+    borderColor: '#f0ad4e',
+    borderRadius: 1,
+    padding: 5,
+    marginTop: 2,
+    marginBottom: 3,
+  },
+  scanInfoSuccess: {
+    fontSize: 20,
+    fontWeight: '400',
+    borderStyle: 'solid',
+    borderWidth: 4,
+    borderColor: '#36D025',
+    borderRadius: 1,
+    padding: 5,
+    marginTop: 2,
+    marginBottom: 3,
+  },
+  pickingInfo: {
+    fontSize: 20,
+    fontWeight: '400',
+    padding: 5,
+    marginTop: 2,
+    marginBottom: 3,
+  },
+  message: {
+    fontSize: 20,
+    color: '#f0ad4e',
+    marginTop: 20,
+    marginBottom: 20,
+  }
+})
+
 class PickingItems extends Component {
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       items: [],
       pslocn: '',
@@ -29,11 +92,15 @@ class PickingItems extends Component {
       s_pssoqs: '',
       passing: true,
       message: '',
-    };
+    }
+    this.cancelPicking = this.cancelPicking.bind(this)
+    this.checkAmt = this.checkAmt.bind(this)
+    this.picked = this.picked.bind(this)
+    this.goBackPicking = this.goBackPicking.bind(this)
   }
 
   componentDidMount() {
-    let items = this.getAllItems()
+    let items = getAllItems()
     this.setState({ items: items }, () => {
       this.checkFinished()
       BackHandler.addEventListener('hardwareBackPress', () => this.cancelPicking())
@@ -89,88 +156,42 @@ class PickingItems extends Component {
   }
 
   cancelPicking() {
-    Alert.alert(
-      '放棄揀貨',
-      '您確定要放棄揀貨？此動作會清除本機上的揀貨記錄',
-      [
-        { text: '確定', onPress: () => this.goBackPicking() },
-        { text: '取消', onPress: () => null },
-      ],
-      { cancelable: false }
-    )
+    const title = '放棄揀貨'
+    const msg = '您確定要放棄揀貨？此動作會清除本機上的揀貨記錄'
+    confirm(title, msg, this.goBackPicking, () => { })
     return true
   }
 
   goBackPicking() {
-    this.removePicking()
-    const picking = NavigationActions.reset({
-      index: 0,
-      actions: [
-        NavigationActions.navigate({
-          routeName: 'PickingList',
-        })
-      ]
-    })
-    this.props.navigation.dispatch(picking)
-  }
-
-  removePicking() {
-    let realm = new Realm({ schema: [pickingRealm, itemsRealm] })
-    realm.write(() => {
-      let deletePicking = realm.objects(pickingRealm.name)
-      realm.delete(deletePicking)
-      let deleteItems = realm.objects(itemsRealm.name)
-      realm.delete(deleteItems)
-    })
-    realm.close()
+    removePicking()
+    navigationReset(this, 'PickingList')
   }
 
   picked() {
     const { pickValue } = this.state
-    let realm = new Realm({ schema: [pickingRealm, itemsRealm] })
-    realm.write(() => {
-      let obj = realm.objects(itemsRealm.name)
-      let data = obj.filtered('psrmk == "' + pickValue[0] + '" AND pslitm == "' + pickValue[1] + '" AND pslotn == "' + pickValue[2] + '"')
-      data[0].picked = 1
-    })
-    realm.close()
+    picked(pickValue)
     this.checkFinished()
   }
 
   checkFinished() {
     const { items } = this.state
-    let realm = new Realm({ schema: [pickingRealm, itemsRealm] })
-    let obj = realm.objects(itemsRealm.name)
-    let data = obj.filtered('picked == 0')
-    if (data.length > 0) {
-      let pickValue = []
-      pickValue.push(data[0].psrmk)
-      pickValue.push(data[0].pslitm)
-      pickValue.push(data[0].pslotn)
+    let obj = checkFinished(items, styles)
+    if (obj !== null) {
       this.setState({
-        pslocn: data[0].pslocn,
-        pickValue: pickValue,
-        pssoqs: data[0].pssoqs,
-        psuom: data[0].psuom,
-        scan: 0,
-        scanStyle_0: styles.scanInfo,
-        scanStyle_1: styles.scanInfo,
-        scanStyle_2: styles.scanInfo,
-        s_pssoqs: '',
-        passing: false,
+        pslocn: obj.pslocn,
+        pickValue: obj.pickValue,
+        pssoqs: obj.pssoqs,
+        psuom: obj.psuom,
+        scan: obj.scan,
+        scanStyle_0: obj.scanStyle_0,
+        scanStyle_1: obj.scanStyle_1,
+        scanStyle_2: obj.scanStyle_2,
+        s_pssoqs: obj.s_pssoqs,
+        passing: obj.passing,
       })
-      realm.close()
       return
     }
-    realm.close()
-    this.goPickingEnd()
-  }
-
-  goPickingEnd() {
-    const navigationAction = NavigationActions.navigate({
-      routeName: 'PickingEnd',
-    })
-    this.props.navigation.dispatch(navigationAction)
+    navigationGo(this, 'PickingEnd')
   }
 
   render() {
@@ -199,7 +220,7 @@ class PickingItems extends Component {
           <Container>
             <Header>
               <Left>
-                <Button transparent onPress={this.cancelPicking.bind(this)} style={{ width: 50 }}>
+                <Button transparent onPress={this.cancelPicking} style={{ width: 50 }}>
                   <Icon name='md-close' />
                 </Button>
               </Left>
@@ -221,7 +242,7 @@ class PickingItems extends Component {
                     onChange={(e) => this.setState({ s_pssoqs: e.nativeEvent.text })}
                     autoFocus={true}
                     value={s_pssoqs.toString()}
-                    onSubmitEditing={() => this.checkAmt()}
+                    onSubmitEditing={this.checkAmt}
                   />
                 </Item>
               }
@@ -229,7 +250,7 @@ class PickingItems extends Component {
                 <Text style={styles.message}>{message}</Text>
               }
               {passing &&
-                <Button block primary large onPress={this.picked.bind(this)}>
+                <Button block primary large onPress={this.picked}>
                   <Text>確認</Text>
                 </Button>
               }
@@ -241,46 +262,5 @@ class PickingItems extends Component {
   }
 }
 
-const styles = StyleSheet.create({
-  content: {
-    padding: 10
-  },
-  scanInfo: {
-    fontSize: 20,
-    fontWeight: '400',
-    borderStyle: 'solid',
-    borderWidth: 2,
-    borderColor: '#f0ad4e',
-    borderRadius: 1,
-    padding: 5,
-    marginTop: 2,
-    marginBottom: 3,
-  },
-  scanInfoSuccess: {
-    fontSize: 20,
-    fontWeight: '400',
-    borderStyle: 'solid',
-    borderWidth: 4,
-    borderColor: '#36D025',
-    borderRadius: 1,
-    padding: 5,
-    marginTop: 2,
-    marginBottom: 3,
-  },
-  pickingInfo: {
-    fontSize: 20,
-    fontWeight: '400',
-    padding: 5,
-    marginTop: 2,
-    marginBottom: 3,
-  },
-  message: {
-    fontSize: 20,
-    color: '#f0ad4e',
-    marginTop: 20,
-    marginBottom: 20,
-  }
-});
-
 export default withNavigation(PickingItems)
-AppRegistry.registerComponent('PickingItems', () => PickingItems);
+AppRegistry.registerComponent('PickingItems', () => PickingItems)

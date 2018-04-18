@@ -1,6 +1,8 @@
+import { Alert } from 'react-native'
 import Toast from 'react-native-root-toast'
 import base64 from 'base-64'
 import Realm from 'realm'
+import { NavigationActions } from 'react-navigation'
 import { systemRealm } from '../../realm/schema'
 
 export function jwtPayload(token) {
@@ -62,4 +64,36 @@ export function toast(message) {
    * onHide: () => { // toast隐藏回调（动画开始时） }
    */
   Toast.show(message, {position: Toast.positions.BOTTOM})
+}
+
+export function navigationReset(current, routeName, index = 0) {
+  const page = NavigationActions.reset({
+    index: index,
+    actions: [
+      NavigationActions.navigate({
+        routeName: routeName,
+      })
+    ]
+  })
+  current.props.navigation.dispatch(page)
+}
+
+export function navigationGo(current, page, params) {
+  const navigation = NavigationActions.navigate({
+    routeName: page,
+    params: params,
+  })
+  current.props.navigation.dispatch(navigation)
+}
+
+export function confirm(title, msg, ok, cancel) {
+  Alert.alert(
+    title,
+    msg,
+    [
+      {text: '確定', onPress: ok},
+      {text: '取消', onPress: cancel},
+    ],
+    { cancelable: false }
+  )
 }

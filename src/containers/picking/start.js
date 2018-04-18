@@ -1,14 +1,21 @@
 'use strict'
 import React, { Component } from 'react'
-import axios from 'axios'
-import Realm from 'realm'
-import { itemsRealm, pickingRealm } from '../../realm/schema'
 import { AppRegistry, StyleSheet, ListView, BackHandler } from 'react-native'
-import { Container, Content, StyleProvider, Header, Left, Body } from 'native-base'
-import { Button, Title, Text, Icon } from 'native-base'
-import { NavigationActions, withNavigation } from 'react-navigation'
-import { loadToken } from '../../lib'
-import config from '../../config'
+import { 
+  Container, 
+  Content, 
+  StyleProvider, 
+  Header, 
+  Left, 
+  Body, 
+  Button, 
+  Title, 
+  Text, 
+  Icon 
+} from 'native-base'
+import { withNavigation } from 'react-navigation'
+import { loadToken, navigationGo, setCurrentPicking } from '../../lib'
+import { getPickingItems, pickingStart } from '../../api'
 import getTheme from '../../nativeBase/components'
 import material from '../../nativeBase/variables/material'
 
@@ -22,38 +29,36 @@ class PickingStart extends Component {
       isSubmiting: false,
       pickingItems: [],
       vs: ds.cloneWithRows([]),
-    };
+    }
+    this.submitButton = this.submitButton.bind(this)
+    this.goBack = this.goBack.bind(this)
+    this.pickingStart = this.pickingStart.bind(this)
   }
 
   componentDidMount() {
-    BackHandler.addEventListener('hardwareBackPress', () => this.goBack())
+    BackHandler.addEventListener('hardwareBackPress', () => this.goBack)
     this.getPickingItems()
   }
 
   componentWillUnmount() {
-    BackHandler.removeEventListener('hardwareBackPress', () => { })
+    BackHandler.removeEventListener('hardwareBackPress', () => {})
   }
 
   getPickingItems() {
-    this.setState({ isLoading: true })
-    const self = this
     const { state } = this.props.navigation
-    let token = loadToken()
-    const Auth = 'Bearer ' + token
-    axios.get(config.route.pickingItems + state.params.picking.ststop + '/' + config.date, { headers: { Authorization: Auth } })
-      .then(function (response) {
-        if (response.code = 200) {
-          self.setState({
-            pickingItems: response.data,
-            isLoading: false,
-            vs: ds.cloneWithRows(response.data)
-          })
-        } else {
-          alert(response.data.error)
-        }
-      }).catch(function (error) {
-        alert(error)
+    const stop = state.params.picking.ststop
+    this.setState({ isLoading: true })
+    const success = (res) => {
+      this.setState({
+        pickingItems: res.data,
+        isLoading: false,
+        vs: ds.cloneWithRows(res.data)
       })
+    }
+    const error = (err) => {
+      alert(err)
+    }
+    getPickingItems(stop, success, error)
   }
 
   goBack() {
@@ -76,52 +81,24 @@ class PickingStart extends Component {
 
   pickingStart() {
     this.setState({ isSubmiting: true })
-    const self = this
-    let formData = new FormData()
-    formData.append('stop', this.props.navigation.state.params.picking.ststop)
-    formData.append('date', config.date)
-    let token = loadToken()
-    const Auth = 'Bearer ' + token;
-    axios.post(config.route.pickingStart, formData, { headers: { Authorization: Auth } })
-      .then(function (response) {
-        if (response.code = 200) {
-          self.goItems()
-        } else {
-          alert(response.data.error)
-          self.setState({ isSubmiting: false })
-        }
-      }).catch(function (error) {
-        alert(error)
-        self.setState({ isSubmiting: false })
-      })
+    const stop = this.props.navigation.state.params.picking.ststop
+    const success = () => {
+      this.goItems()
+    }
+    const error = () => {
+      alert(error)
+      this.setState({ isSubmiting: false })
+    }
+    pickingStart(stop, success, error)
   }
 
   goItems() {
     const { picking } = this.props.navigation.state.params
     const { pickingItems } = this.state
-    this.props.navigation.state.params.unlock();
-    this.setCurrentPicking(picking, pickingItems)
+    this.props.navigation.state.params.unlock()
+    setCurrentPicking(picking, pickingItems)
     this.setState({ isSubmiting: false })
-    const navigationAction = NavigationActions.navigate({
-      routeName: 'PickingItems',
-    })
-    this.props.navigation.dispatch(navigationAction)
-  }
-
-  setCurrentPicking(picking, items) {
-    let realm = new Realm({ schema: [pickingRealm, itemsRealm] })
-    realm.write(() => {
-      let deletePicking = realm.objects(pickingRealm.name)
-      realm.delete(deletePicking)
-      realm.create(pickingRealm.name, picking)
-
-      let deleteItems = realm.objects(itemsRealm.name)
-      realm.delete(deleteItems)
-      items.map((row) => {
-        realm.create(itemsRealm.name, row)
-      })
-    })
-    realm.close()
+    navigationGo(this, 'PickingItems')
   }
 
   submitButton() {
@@ -133,7 +110,7 @@ class PickingStart extends Component {
       )
     } else {
       return (
-        <Button block primary large onPress={this.pickingStart.bind(this)} style={{ margin: 10 }}>
+        <Button block primary large onPress={this.pickingStart} style={{ margin: 10 }}>
           <Text>開始揀貨</Text>
         </Button>
       )
@@ -149,7 +126,7 @@ class PickingStart extends Component {
         <Container>
           <Header>
             <Left>
-              <Button transparent onPress={this.goBack.bind(this)} style={{ width: 50 }}>
+              <Button transparent onPress={this.goBack} style={{ width: 50 }}>
                 <Icon name='ios-arrow-back-outline' />
               </Button>
             </Left>
@@ -173,7 +150,14 @@ class PickingStart extends Component {
               <Text style={styles.pickingInfo}>揀貨清單讀取中...</Text>
             }
             {!this.state.isLoading &&
-              this.submitButton()
+              this.state.isSubmiting ?
+                <Button block disabled large style={{ margin: 10 }}>
+                  <Text>處理中...</Text>
+                </Button>
+              :
+                <Button block primary large onPress={this.pickingStart} style={{ margin: 10 }}>
+                  <Text>開始揀貨</Text>
+                </Button>
             }
           </Content>
         </Container>
@@ -204,7 +188,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
   },
-});
+})
 
 export default withNavigation(PickingStart)
-AppRegistry.registerComponent('PickingStart', () => PickingStart);
+AppRegistry.registerComponent('PickingStart', () => PickingStart)

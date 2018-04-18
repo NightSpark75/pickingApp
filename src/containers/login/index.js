@@ -4,12 +4,13 @@ import axios from 'axios'
 import { AppRegistry } from 'react-native'
 import { Container, Content, StyleProvider } from 'native-base'
 import { Form, Item, Input, Title, Label, Button, Text } from 'native-base'
-import { NavigationActions, withNavigation } from 'react-navigation'
+import { withNavigation } from 'react-navigation'
 import config from '../../config'
-import { jwtPayload, toast, saveToken } from '../../lib'
+import { jwtPayload, toast, saveToken, navigationReset } from '../../lib'
 import Navbar from '../navbar'
-import getTheme from '../../nativeBase/components';
-import material from '../../nativeBase/variables/material';
+import getTheme from '../../nativeBase/components'
+import material from '../../nativeBase/variables/material'
+import { login } from '../../api'
 
 class Login extends Component {
   constructor(props) {
@@ -20,28 +21,26 @@ class Login extends Component {
       password: '',
       isLoading: false,
     }
+    this.login = this.login.bind(this)
+    this.setLoginUser = this.setLoginUser.bind(this)
+    this.loginSuccess = this.loginSuccess.bind(this)
   }
 
   login() {
-    const self = this
     const { id, password } = this.state
-    let formData = new FormData()
-    formData.append('id', id)
-    formData.append('password', password)
-    this.setState({ isLoading: true })
-    axios.post(config.route.login, formData)
-      .then(function (response) {
-        if (response.code = 200) {
-          self.setLoginUser(response.data.token)
-          self.loginSuccess()
-        } else {
-          alert(response.data.error)
-          self.setState({ isLoading: false })
-        }
-      }).catch(function (error) {
-        alert(error)
-        self.setState({ isLoading: false })
-      })
+    const success = (res) => {
+      this.setState({isLoading: false})
+      this.setLoginUser(res.data.token)
+      this.loginSuccess()
+    }
+    const error = (err) => {
+      alert(err)
+      this.setState({isLoading: false})
+    }
+
+    this.setState({isLoading: true}, () => {
+      login(id, password, success, error)
+    })
   }
 
   setLoginUser(token) {
@@ -51,15 +50,7 @@ class Login extends Component {
   }
 
   loginSuccess() {
-    const firstPage = NavigationActions.reset({
-      index: 0,
-      actions: [
-        NavigationActions.navigate({
-          routeName: 'PickingList',
-        })
-      ]
-    })
-    this.props.navigation.dispatch(firstPage)
+    navigationReset(this, 'PickingList')
   }
 
   render() {
@@ -86,7 +77,7 @@ class Login extends Component {
                   secureTextEntry={true}
                   onChange={(e) => this.setState({ password: e.nativeEvent.text })}
                   value={password}
-                  onSubmitEditing={() => this.login()}
+                  onSubmitEditing={this.login}
                 />
               </Item>
             </Form>
@@ -95,7 +86,7 @@ class Login extends Component {
                 <Text>處理中...</Text>
               </Button>
               :
-              <Button block primary onPress={this.login.bind(this)} style={{ margin: 10 }}>
+              <Button block primary onPress={this.login} style={{ margin: 10 }}>
                 <Text>登入</Text>
               </Button>
             }

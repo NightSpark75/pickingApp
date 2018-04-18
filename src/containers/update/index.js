@@ -1,31 +1,24 @@
 'use strict'
 import React, { Component } from 'react'
-import axios from 'axios'
 import { AppRegistry, StyleSheet, Text, View, Button, Alert } from 'react-native'
 import { Toast } from 'native-base'
-import { NavigationActions, withNavigation } from 'react-navigation'
+import { withNavigation } from 'react-navigation'
 import FileTransfer from '@remobile/react-native-file-transfer'
 import RNFS from 'react-native-fs'
 import config from '../../config'
 import RNRestart from 'react-native-restart'
 import { NativeModules } from 'react-native'
-import { connect } from 'react-redux'
-import { jwtPayload, saveToken, loadToken, removeToken, LocalStorage } from '../../lib'
-import { userLogin } from '../../actions'
+import { jwtPayload, saveToken, loadToken, removeToken, LocalStorage, navigationReset } from '../../lib'
+import { refreshToken } from '../../api'
 
 const VERSION = config.version
 const VERSION_NUMBER = config.version_number
 const URL_VERSION = config.url_version
 const URL_DOWNLOAD = config.url_download
 
-let token = ''
-let payload = {}
-let m = ''
-
 class Update extends Component {
   constructor(props) {
     super(props)
-
     this.state = {
       message: '檢查更新中...',
       path: '',
@@ -41,14 +34,14 @@ class Update extends Component {
   }
 
   async checkLogin() {
-    token = loadToken()
-    payload = jwtPayload(token)
+    let token = loadToken()
+    let payload = jwtPayload(token)
     if (payload) {
-      this.checkTokenExp()
+      this.checkTokenExp(payload, token)
     }
   }
 
-  checkTokenExp() {
+  checkTokenExp(payload, token) {
     if (payload.exp*1000 < new Date().getTime()) {
       this.refreshToken(token)
     } else {
@@ -57,19 +50,13 @@ class Update extends Component {
   }
 
   refreshToken(token) {
-    let self = this
-    let form_data = new FormData()
-    form_data.append('token', token)
-    axios.post(config.route.refresh, form_data)
-      .then(function (response) {
-        if (response.code = 200) {
-          self.setToken(response.data.token)
-        } else {
-          removeToken()
-        }
-      }).catch(function (error) {
-        removeToken()
-      })
+    const success = (newToken) => {
+      this.setToken(newToken)
+    }
+    const error = (err) => {
+      removeToken()
+    }
+    refreshToken(token, success, error)
   }
 
   setToken(token) {
@@ -125,15 +112,7 @@ class Update extends Component {
   goLogin() {
     const { login } = this.state
     let route = login ? 'PickingList': 'Login'
-    const resetAction = NavigationActions.reset({
-      index: 0,
-      actions: [
-        NavigationActions.navigate({
-          routeName: route,
-        })
-      ]
-    })
-    this.props.navigation.dispatch(resetAction)
+    navigationReset(this, route)
   }
 
   goRestart() {
@@ -189,12 +168,5 @@ const styles = StyleSheet.create({
   }
 })
 
-function mapStateToProps(state) {
-	const { login } = state
-	return {
-		login
-	}
-}
-
-export default connect(mapStateToProps)(withNavigation(Update))
+export default withNavigation(Update)
 AppRegistry.registerComponent('Update', () => Update)
