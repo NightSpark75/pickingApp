@@ -45,8 +45,7 @@ class PickingStart extends Component {
   }
 
   getPickingItems() {
-    const { state } = this.props.navigation
-    const stop = state.params.picking.ststop
+    const stop = this.props.navigation.state.params.picking.ststop
     this.setState({ isLoading: true })
     const success = (res) => {
       this.setState({
@@ -85,8 +84,8 @@ class PickingStart extends Component {
     const success = () => {
       this.goItems()
     }
-    const error = () => {
-      alert(error)
+    const error = (err) => {
+      alert(err.response.data.message)
       this.setState({ isSubmiting: false })
     }
     pickingStart(stop, success, error)
@@ -94,11 +93,10 @@ class PickingStart extends Component {
 
   goItems() {
     const { picking } = this.props.navigation.state.params
-    const { pickingItems } = this.state
     this.props.navigation.state.params.unlock()
-    setCurrentPicking(picking, pickingItems)
     this.setState({ isSubmiting: false })
-    navigationGo(this, 'PickingItems')
+    const params = {picking: picking}
+    navigationGo(this, 'PickingItems', params)
   }
 
   submitButton() {
@@ -118,9 +116,8 @@ class PickingStart extends Component {
   }
 
   render() {
-    const { state } = this.props.navigation
     const { pickingItems } = this.state
-    const { picking } = state.params
+    const { picking } = this.props.navigation.state.params
     return (
       <StyleProvider style={getTheme(material)} >
         <Container>

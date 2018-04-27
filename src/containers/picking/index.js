@@ -47,11 +47,15 @@ class Picking extends Component {
 
   getPickingList() {
     const success = (res) => {
-      this.setState({
-        pickingList: res.data,
-        refreshing: false,
-        vs: ds.cloneWithRows(res.data)
-      })
+      if (res.data.current === null) {
+        this.setState({
+          pickingList: res.data.list,
+          refreshing: false,
+          vs: ds.cloneWithRows(res.data.list)
+        })
+      } else {
+        this.goCurrentPicking(res.data.current)
+      }
     }
     const error = (err) => {
       alert(err)
@@ -59,8 +63,14 @@ class Picking extends Component {
     getPickingList(success, error)
   }
 
-  goCurrentPicking() {
-    navigationGo(this, 'PickingItems')
+  goCurrentPicking(data) {
+    const picking = {
+      sticu: data.sticu,
+      ststop: data.ststop,
+      staddj: data.staddj,
+    }
+    const params = {picking: picking}
+    navigationGo(this, 'PickingItems', params)
   }
 
   goPickingStart(item) {
@@ -119,6 +129,7 @@ class Picking extends Component {
                 />
               }
             >
+            {pickingList.length > 0 &&
               <ListView
                 enableEmptySections={true}
                 style={styles.listView}
@@ -129,13 +140,14 @@ class Picking extends Component {
                     onPress={this.goPickingStart.bind(this, rowData)}
                   >
                     <Text
-                      style={rowData.stky2 !== null ? styles.listItems : styles.listItemsWar}
+                      style={rowData.sticu !== null ? styles.listItems : styles.listItemsWar}
                     >
                       {'單號:' + rowData.sticu + ' 站碼:' + rowData.ststop}
                     </Text>
                   </TouchableHighlight>
                 )}
               />
+            }
             </Content>
           </Container>
         </Drawer>

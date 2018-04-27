@@ -4,7 +4,7 @@ import { AppRegistry, StyleSheet, Alert, View, BackHandler } from 'react-native'
 import { Container, Content, StyleProvider, Header, Left, Body, Button, Title, Text, Icon } from 'native-base'
 import { getPickingInfo, removePicking, confirm, navigationReset } from '../../lib'
 import { withNavigation } from 'react-navigation'
-import { pickingEnd } from '../../api'
+import { pickingEnd, pausePicking, pickup } from '../../api'
 import getTheme from '../../nativeBase/components'
 import material from '../../nativeBase/variables/material'
 
@@ -12,9 +12,6 @@ class PickingEnd extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      sticu: '',
-      ststop: '',
-      staddj: '',
       isSubmiting: false,
     }
     this.goBackPicking = this.goBackPicking.bind(this)
@@ -24,46 +21,43 @@ class PickingEnd extends Component {
 
   componentDidMount() {
     BackHandler.addEventListener('hardwareBackPress', () => this.cancelPicking())
-    this.getPickingInfo()
   }
 
   componentWillUnmount() {
     BackHandler.removeEventListener('hardwareBackPress')
   }
 
-  getPickingInfo() {
-    let data = getPickingInfo()
-    this.setState({
-      sticu: data.sticu,
-      ststop: data.ststop,
-      staddj: data.staddj,
-    })
-  }
-
   cancelPicking() {
-    const title = '放棄揀貨'
-    const msg = '您確定要放棄揀貨？此動作會清除本機上的揀貨記錄'
+    const title = '暫停揀貨'
+    const msg = '您確定要暫停揀貨？'
     confirm(title, msg, this.goBackPicking(), () => {})
     return true
   }
 
   goBackPicking() {
-    removePicking()
-    navigationReset(this, 'PickingList')
+    const { item } = this.state
+    const success = (res) => {
+      this.setState({isLoading: true})
+      navigationReset(this, 'PickingList')
+    }
+    const error = (err) => {
+      alert(err.response.data)
+    }
+    pausePicking(item.stop, success, error)
   }
 
   pickingEnd() {
+    const { picking } = this.props.navigation.state.params
     this.setState({ isSubmiting: true })
-    const { sticu, ststop } = this.state
     const success = (res) => {
-      alert('單號:' + sticu + ', 站碼:' + ststop + ' 已完成鍊料')
-      this.goBackPicking()
+      alert('單號:' + picking.sticu + ', 站碼:' + picking.ststop + ' 已完成鍊料')
+      navigationReset(this, 'PickingList')
     }
     const error = (err) => {
       alert(err)
       this.setState({ isSubmiting: false })
     }
-    pickingEnd(ststop, success, error)
+    pickingEnd(picking.ststop, success, error)
   }
 
   submitButton() {
@@ -84,32 +78,30 @@ class PickingEnd extends Component {
 
   render() {
     const { state } = this.props.navigation;
-    const { ststop, sticu, staddj } = this.state
+    const { picking } = this.props.navigation.state.params
     return (
       <StyleProvider style={getTheme(material)} >
         <Container>
           <Header>
             <Left>
-              <Button transparent onPress={this.cancelPicking} style={{ width: 50 }}>
+              {/*<Button transparent onPress={this.cancelPicking} style={{ width: 50 }}>
                 <Icon name='md-close' />
-              </Button>
+              </Button>*/}
             </Left>
             <Body>
               <Title>完成揀貨</Title>
             </Body>
           </Header>
           <Content style={styles.content}>
-            {ststop !== '' &&
-              <View>
-                <Text style={styles.pickingInfo}>{'揀貨單號:' + sticu}</Text>
-                <Text style={styles.pickingInfo}>{'站碼:' + ststop}</Text>
-                <Text style={styles.pickingInfo}>{'日期:' + staddj.substring(0, 10)}</Text>
-                <Text style={styles.message}>
-                  所有品項已完成，按下按鈕完成揀貨...
-                </Text>
-                {this.submitButton()}
-              </View>
-            }
+            <View>
+              <Text style={styles.pickingInfo}>{'揀貨單號:' + picking.sticu}</Text>
+              <Text style={styles.pickingInfo}>{'站碼:' + picking.ststop}</Text>
+              <Text style={styles.pickingInfo}>{'日期:' + picking.staddj.substring(0, 10)}</Text>
+              <Text style={styles.message}>
+                所有品項已完成，按下按鈕完成揀貨...
+              </Text>
+              {this.submitButton()}
+            </View>
           </Content>
         </Container>
       </StyleProvider>

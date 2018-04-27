@@ -19,7 +19,18 @@ export function getPickingItems(ststop, success, error) {
   axios.get(config.route.pickingItems + ststop + '/' + config.date, { headers: { Authorization: Auth } })
   .then((res) => {
     success(res)
-  }).catch((error) => {
+  }).catch((err) => {
+    error(err)
+  })
+}
+
+export function getPickingItem(ststop, success, error) {
+  let token = loadToken()
+  const Auth = 'Bearer ' + token
+  axios.get(config.route.pickingItem + ststop + '/' + config.date, { headers: { Authorization: Auth } })
+  .then((res) => {
+    success(res)
+  }).catch((err) => {
     error(err)
   })
 }
@@ -31,6 +42,37 @@ export function pickingStart(stop, success, error) {
   let token = loadToken()
   const Auth = 'Bearer ' + token;
   axios.post(config.route.pickingStart, formData, { headers: { Authorization: Auth } })
+  .then((res) => {
+    success(res)
+  }).catch((err) => {
+    error(err)
+  })
+}
+
+export function pickup(data, success, error) {
+  let formData = new FormData()
+  formData.append('stop', data.psstop)
+  formData.append('date', config.date)
+  formData.append('rmk', data.psrmk)
+  formData.append('litm', data.pslitm)
+  formData.append('lotn', data.pslotn)
+  let token = loadToken()
+  const Auth = 'Bearer ' + token;
+  axios.post(config.route.pickup, formData, { headers: { Authorization: Auth } })
+  .then((res) => {
+    success(res)
+  }).catch((err) => {
+    error(err)
+  })
+}
+
+export function pausePicking(stop, success, error) {
+  let formData = new FormData()
+  formData.append('stop', stop)
+  formData.append('date', config.date)
+  let token = loadToken()
+  const Auth = 'Bearer ' + token;
+  axios.post(config.route.pickingPause, formData, { headers: { Authorization: Auth } })
   .then((res) => {
     success(res)
   }).catch((err) => {

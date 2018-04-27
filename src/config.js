@@ -1,7 +1,7 @@
 const app_name = 'pickingApp'
 const app_number = '201'
 const major = '000'
-const minor = '02'
+const minor = '03'
 const build = '01'
 const protocol = 'http'
 const host = '172.17.100.51'
@@ -24,8 +24,11 @@ export default {
     login: url + '/api/jwt/login',
     refresh: url + '/api/jwt/refresh',
     pickingList: url + '/api/productWarehouse/picking/list',
+    pickingItem: url + '/api/productWarehouse/picking/item/',
     pickingItems: url + '/api/productWarehouse/picking/items/',
     pickingStart: url + '/api/productWarehouse/picking/start',
     pickingEnd: url + '/api/productWarehouse/picking/end',
+    pickingPause: url + '/api/productWarehouse/picking/pause',
+    pickup: url + '/api/productWarehouse/picking/pickup',
   },
 }
