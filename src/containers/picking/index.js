@@ -129,7 +129,13 @@ class Picking extends Component {
                 />
               }
             >
-            {pickingList.length > 0 &&
+            {pickingList.length === 0 ?
+              <View style={{alignItems: 'center',}}>
+                <Text style={{fontSize: 24}}>
+                  目前沒有揀貨單...
+                </Text>
+              </View>
+            :
               <ListView
                 enableEmptySections={true}
                 style={styles.listView}
