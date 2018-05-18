@@ -34,7 +34,7 @@ import { pausePicking, pickup, getPickingItem } from '../../api'
 
 const ScanModule = NativeModules.ScanModule
 const msgOption = ['儲位', '料號', '批號']
-const scanColumn = ['pslocn', 'pslitm', 'pslotn']
+const scanColumn = ['psrmk', 'pslitm', 'pslotn']
 
 const styles = StyleSheet.create({
   content: {
@@ -245,6 +245,7 @@ class PickingItems extends Component {
                 <Text style={scanIndex > 1 ? styles.scanInfoSuccess : styles.scanInfo}>{'料號: ' + item.pslitm.trim()}</Text>
                 <Text style={scanIndex > 2 ? styles.scanInfoSuccess : styles.scanInfo}>{'批號: ' + item.pslotn.trim()}</Text>
                 <Text style={styles.pickingInfo}>{'揀貨數量: ' + item.pssoqs + ' ' + item.psuom.trim()}</Text>
+                {shwoDetail(Number(item.pssoqs), item.tag1, item.tag2, item.tag3)}
                 {scanIndex === 3 &&
                   <Item floatingLabel>
                     <Label>輸入揀貨數量</Label>
@@ -277,6 +278,35 @@ class PickingItems extends Component {
       </StyleProvider>
     )
   }
+}
+
+function shwoDetail(soqs, tag1, tag2, tag3) {
+  soqs = Number(soqs)
+  let t1 = Number(tag1)
+  let t2 = Number(tag2) * t1
+  let t3 = Number(tag3) * t2
+  let b1, b2, b3, msg
+  if (t3 > 0) {
+    b3 = Math.floor(soqs / t3) 
+    soqs = soqs % t3
+    b2 = Math.floor(soqs / t2)
+    soqs = soqs % t2
+    b1 = Math.floor(soqs / t1)
+    msg = b3 + '箱' + b2 + '盒又' + b1
+  } else if (t2 > 0) {
+    b2 = Math.floor(soqs / t2)
+    soqs = soqs % t2
+    b1 = Math.floor(soqs / t1)
+    msg = b2 + '盒又' + b1
+  } else if (t1 > 0) {
+    b1 = Math.floor(soqs / t1)
+    msg = b1 + '銷售包裝'
+  } else {
+    msg = '--'
+  }
+  return (
+    <Text style={styles.pickingInfo}>{'揀貨數量: ' + msg}</Text>
+  )
 }
 
 export default withNavigation(PickingItems)
