@@ -15,7 +15,8 @@
     "install": "^0.11.0",
     "jwt-decode": "^2.2.0",
     "jwt-simple": "^0.5.1",
-    "native-base": "^2.4.4",
+    "native-base": "^2.4.5",
+    "node-pre-gyp": "^0.10.0",
     "react": "16.3.2",
     "react-native": "0.55.4",
     "react-native-fs": "^2.9.12",
@@ -29,7 +30,8 @@
     "redux-actions": "^2.3.2",
     "redux-immutable": "^4.0.0",
     "redux-logger": "^3.0.6",
-    "redux-thunk": "^2.2.0"
+    "redux-thunk": "^2.2.0",
+    "request": "^2.86.0"
   },
   "devDependencies": {
     "babel-jest": "22.4.3",
