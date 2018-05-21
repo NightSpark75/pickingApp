@@ -106,6 +106,12 @@ class PickingStart extends Component {
           <Text>處理中...</Text>
         </Button>
       )
+    } else if (this.state.pickingItems.length === 0) {
+      return (
+        <Button block disabled large style={{ margin: 10 }}>
+          <Text>開始揀貨</Text>
+        </Button>
+      )
     } else {
       return (
         <Button block primary large onPress={this.pickingStart} style={{ margin: 10 }}>
@@ -150,6 +156,10 @@ class PickingStart extends Component {
               this.state.isSubmiting ?
                 <Button block disabled large style={{ margin: 10 }}>
                   <Text>處理中...</Text>
+                </Button>
+              : this.state.pickingItems.length === 0 ?
+                <Button block primary disabled large style={{ margin: 10 }}>
+                  <Text>開始揀貨</Text>
                 </Button>
               :
                 <Button block primary large onPress={this.pickingStart} style={{ margin: 10 }}>
