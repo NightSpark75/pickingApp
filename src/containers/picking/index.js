@@ -11,7 +11,7 @@ import config from '../../config'
 import getTheme from '../../nativeBase/components'
 import material from '../../nativeBase/variables/material'
 import Sidebar from '../sidebar'
-import { goCurrentPicking, getPickingList} from '../../api'
+import { goCurrentPicking, getPickingList } from '../../api'
 
 let ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1 !== r2 })
 let doubleClick = false
@@ -28,21 +28,7 @@ class Picking extends Component {
   }
 
   componentDidMount() {
-    this.setState({ refreshing: true }, () => {
-      this.checkPicking()
-    })
-  }
-
-  checkPicking() {
-    let realm = new Realm({ schema: [pickingRealm] })
-    let data = realm.objects(pickingRealm.name)
-    if (data.length === 0) {
-      realm.close()
-      this.getPickingList()
-    } else {
-      realm.close()
-      this.goCurrentPicking()
-    }
+    this.setState({ refreshing: true }, () => this.onRefresh())
   }
 
   getPickingList() {
@@ -69,7 +55,7 @@ class Picking extends Component {
       ststop: data.ststop,
       staddj: data.staddj,
     }
-    const params = {picking: picking}
+    const params = { picking: picking }
     navigationGo(this, 'PickingItems', params)
   }
 
@@ -129,31 +115,31 @@ class Picking extends Component {
                 />
               }
             >
-            {pickingList.length === 0 ?
-              <View style={{alignItems: 'center',}}>
-                <Text style={{fontSize: 24}}>
-                  目前沒有揀貨單...
+              {pickingList.length === 0 ?
+                <View style={{ alignItems: 'center', }}>
+                  <Text style={{ fontSize: 24 }}>
+                    目前沒有揀貨單...
                 </Text>
-              </View>
-            :
-              <ListView
-                enableEmptySections={true}
-                style={styles.listView}
-                dataSource={this.state.vs}
-                renderRow={(rowData) => (
-                  <TouchableHighlight
-                    underlayColor='rgb(143, 186, 239)'
-                    onPress={this.goPickingStart.bind(this, rowData)}
-                  >
-                    <Text
-                      style={rowData.sticu !== null ? styles.listItems : styles.listItemsWar}
+                </View>
+                :
+                <ListView
+                  enableEmptySections={true}
+                  style={styles.listView}
+                  dataSource={this.state.vs}
+                  renderRow={(rowData) => (
+                    <TouchableHighlight
+                      underlayColor='rgb(143, 186, 239)'
+                      onPress={this.goPickingStart.bind(this, rowData)}
                     >
-                      {'單號:' + rowData.sticu + ' 站碼:' + rowData.ststop}
-                    </Text>
-                  </TouchableHighlight>
-                )}
-              />
-            }
+                      <Text
+                        style={rowData.sticu !== null ? styles.listItems : styles.listItemsWar}
+                      >
+                        {'單號:' + rowData.sticu + ' 站碼:' + rowData.ststop}
+                      </Text>
+                    </TouchableHighlight>
+                  )}
+                />
+              }
             </Content>
           </Container>
         </Drawer>
