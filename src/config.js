@@ -4,7 +4,7 @@ const major = '000'
 const minor = '03'
 const build = '05'
 const protocol = 'http'
-const host = '172.17.100.51'
+const host = 'ppm.standard.com.tw'
 const url = protocol + '://' + host
 const dt = new Date()
 const date = dt.getFullYear() + (dt.getMonth() + 1 < 10 ? '0' : '') + (dt.getMonth() + 1) + (dt.getDate() < 10 ? '0' : '') + dt.getDate()
@@ -16,8 +16,8 @@ export default {
   app_number: app_number,
   version: parseInt(major) + '.' + parseInt(minor) + '.' + parseInt(build),
   version_number: parseInt(app_number + major + minor + build),
-  url_version: 'http://172.17.100.51/api/native/pad/bundle/version/' + app_number,
-  url_download: 'http://172.17.100.51/api/native/pad/bundle/download/' + app_number,
+  url_version: 'http://ppm.standard.com.tw/api/native/pad/bundle/version/' + app_number,
+  url_download: 'http://ppm.standard.com.tw/native/pad/bundle/download/' + app_number,
   programID: programID,
 
   route: {
